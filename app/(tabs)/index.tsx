@@ -6,6 +6,7 @@ import { CoverArt } from '../../components/CoverArt'
 import { Logo } from '../../components/Logo'
 import { OptionSheet } from '../../components/OptionSheet'
 import { ProgressBar } from '../../components/ProgressBar'
+import { RenameDialog } from '../../components/RenameDialog'
 import { BOOK_SORT_LABELS } from '../../constants/Defaults'
 import { useLibrary } from '../../context/LibraryContext'
 import { usePlayer } from '../../context/PlayerContext'
@@ -17,10 +18,11 @@ import { formatLongDuration } from '../../utils/time'
 export default function LibraryScreen() {
 	const theme = useTheme()
 	const router = useRouter()
-	const { books, settings, importing, addFolderBook, addFilesBook, refreshBook, deleteBook, updateSettings } = useLibrary()
+	const { books, settings, importing, addFolderBook, addFilesBook, refreshBook, deleteBook, renameBook, updateSettings } = useLibrary()
 	const { book: playingBook, resumeBook } = usePlayer()
 	const [sortSheetOpen, setSortSheetOpen] = useState(false)
 	const [bookMenu, setBookMenu] = useState<Book | null>(null)
+	const [renaming, setRenaming] = useState<Book | null>(null)
 
 	const sorted = useMemo(() => sortBooks(books, settings.bookSortMode), [books, settings.bookSortMode])
 
@@ -36,8 +38,26 @@ export default function LibraryScreen() {
 	)
 
 	const handleAddFolder = async () => {
-		const result = await addFolderBook()
-		if (result) router.push(`/book/${result.book.id}`)
+		try {
+			const result = await addFolderBook()
+			if (result && result.book.tracks.length === 0) {
+				Alert.alert('No audio files', 'That folder doesn\u2019t contain any supported audio files (mp3, m4a, m4b, flac…).')
+				deleteBook(result.book.id)
+				return
+			}
+			if (result) router.push(`/book/${result.book.id}`)
+		} catch {
+			Alert.alert('Import failed', 'The folder could not be scanned. Try again or pick a different one.')
+		}
+	}
+
+	const handleAddFiles = async () => {
+		try {
+			const result = await addFilesBook()
+			if (result) router.push(`/book/${result.book.id}`)
+		} catch {
+			Alert.alert('Import failed', 'The files could not be imported. Try again.')
+		}
 	}
 
 	const remainingMs = (book: Book): number | undefined => {
@@ -78,7 +98,7 @@ export default function LibraryScreen() {
 						Add a folder of audiobooks — each folder becomes a book, and Lector remembers exactly where you stopped.
 					</Text>
 					<AddButton themeLabel="Add folder" icon="folder-open-outline" onPress={handleAddFolder} primary />
-					<AddButton themeLabel="Import audio files" icon="document-outline" onPress={addFilesBook} />
+					<AddButton themeLabel="Import audio files" icon="document-outline" onPress={handleAddFiles} />
 				</View>
 			</View>
 		)
@@ -95,7 +115,7 @@ export default function LibraryScreen() {
 					<Pressable hitSlop={8} onPress={handleAddFolder} style={styles.actionButton}>
 						<Ionicons name="folder-open-outline" size={22} color={theme.text} />
 					</Pressable>
-					<Pressable hitSlop={8} onPress={addFilesBook} style={styles.actionButton}>
+					<Pressable hitSlop={8} onPress={handleAddFiles} style={styles.actionButton}>
 						<Ionicons name="add-outline" size={26} color={theme.text} />
 					</Pressable>
 				</View>
@@ -190,6 +210,11 @@ export default function LibraryScreen() {
 							]
 						: []),
 					{
+						label: 'Rename',
+						icon: 'pencil-outline',
+						onPress: () => bookMenu && setRenaming(bookMenu),
+					},
+					{
 						label: 'Remove from library',
 						icon: 'trash-outline',
 						danger: true,
@@ -197,6 +222,15 @@ export default function LibraryScreen() {
 					},
 				]}
 			/>
+
+			{renaming && (
+				<RenameDialog
+					visible
+					currentName={renaming.name}
+					onClose={() => setRenaming(null)}
+					onSubmit={(name) => renameBook(renaming.id, name)}
+				/>
+			)}
 		</View>
 	)
 }

@@ -36,7 +36,8 @@ interface PlayerContextType {
 	setRate: (rate: number) => void
 	setVolumePercent: (percent: number, persist?: boolean) => void
 	setSleepTimerMinutes: (minutes: number) => void
-	cancelSleepTimer: () => void
+	/** Set when the player failed to load/play a file; cleared on next successful load */
+	playbackError: string | null
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined)
@@ -55,6 +56,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 	const [volumePercent, setVolumePercentState] = useState(100)
 	const [sleepTimer, setSleepTimer] = useState<SleepTimerMode>({ kind: 'off' })
 	const [sleepRemainingMs, setSleepRemainingMs] = useState<number | null>(null)
+	const [playbackError, setPlaybackError] = useState<string | null>(null)
 
 	// Monotonic position that survives status tick latency
 	const positionRef = useRef(0)
@@ -203,9 +205,16 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 			const id = bookIdRef.current
 			if (!target || !id) return
 
-			playbackService.load(target.uri, onStatus)
-			playbackService.setRate(rateRef.current)
-			playbackService.setVolumeFromPercent(volumePercentRef.current)
+			try {
+				playbackService.load(target.uri, onStatus)
+				playbackService.setRate(rateRef.current)
+				playbackService.setVolumeFromPercent(volumePercentRef.current)
+				setPlaybackError(null)
+			} catch (error) {
+				setPlaybackError(`Couldn't play "${target.title}".`)
+				console.error(`Failed to load ${target.uri}:`, error)
+				return
+			}
 
 			setTrackIndex(index)
 			trackIndexRef.current = index
@@ -388,11 +397,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 		setSleepRemainingMs(minutes * 60_000)
 	}, [])
 
-	const cancelSleepTimer = useCallback(() => {
-		setSleepTimer({ kind: 'off' })
-		setSleepRemainingMs(null)
-	}, [])
-
 	// Sleep timer ticks once per second
 	useEffect(() => {
 		if (sleepTimer.kind !== 'minutes') return
@@ -449,7 +453,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 			setRate,
 			setVolumePercent,
 			setSleepTimerMinutes,
-			cancelSleepTimer,
+			playbackError,
 		}),
 		[
 			book,
@@ -476,7 +480,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 			setRate,
 			setVolumePercent,
 			setSleepTimerMinutes,
-			cancelSleepTimer,
+			playbackError,
 		],
 	)
 

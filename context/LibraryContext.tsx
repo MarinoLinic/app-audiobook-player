@@ -3,8 +3,9 @@ import { DEFAULT_SETTINGS } from '../constants/Defaults'
 import { libraryService } from '../services/LibraryService'
 import { storage } from '../services/StorageService'
 import { Book, BookSource, Settings, Track, TrackSortMode } from '../types'
-import { resumeTarget, sortTracks } from '../utils/bookSort'
+import { sortTracks } from '../utils/bookSort'
 import { hashId } from '../utils/id'
+import { guessNameFromFiles, mapWithConcurrency } from '../utils/naming'
 
 const BOOKS_KEY = 'books'
 const SETTINGS_KEY = 'settings'
@@ -29,7 +30,7 @@ interface LibraryContextType {
 	setTrackSortMode: (bookId: string, mode: TrackSortMode) => Promise<void>
 	updateTrackProgress: (bookId: string, trackId: string, positionMs: number, durationMs?: number) => Promise<void>
 	markTrackCompleted: (bookId: string, trackId: string) => Promise<void>
-	getResumeTarget: (book: Book) => { track: Track; positionMs: number } | null
+	setTrackCompleted: (bookId: string, trackId: string, completed: boolean) => Promise<void>
 	bookById: (id: string) => Book | undefined
 	refreshLibrary: () => Promise<void>
 }
@@ -116,13 +117,13 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
 		const sorted = sortTracks(tracks, extra.sortMode)
 		let author: string | undefined
 		let coverUri = extra.coverUri
-		for (const track of sorted) {
+		await mapWithConcurrency(sorted, 6, async (track) => {
 			const picture = await libraryService.enrichTrack(track)
 			if (!author && track.artist) author = track.artist
 			if (!coverUri && picture.pictureBytes) {
 				coverUri = await libraryService.saveCover(id, picture.pictureBytes, picture.pictureMime ?? 'image/jpeg')
 			}
-		}
+		})
 		return {
 			id,
 			name: name.trim() || 'Untitled book',
@@ -328,7 +329,27 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
 		[mutateBook],
 	)
 
-	const getResumeTarget = useCallback((book: Book) => resumeTarget(book), [])
+	const setTrackCompleted = useCallback(
+		async (bookId: string, trackId: string, completed: boolean) => {
+			mutateBook(bookId, (b) => {
+				const prev = b.progress[trackId] ?? { positionMs: 0, updatedAt: 0 }
+				return {
+					...b,
+					progress: {
+						...b.progress,
+						[trackId]: {
+							positionMs: completed ? (prev.positionMs ?? 0) : 0,
+							durationMs: prev.durationMs,
+							completed,
+							updatedAt: Date.now(),
+						},
+					},
+				}
+			})
+		},
+		[mutateBook],
+	)
+
 	const bookById = useCallback((id: string) => booksRef.current.find((b) => b.id === id), [])
 
 	const refreshLibrary = useCallback(async () => {
@@ -353,7 +374,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
 			setTrackSortMode,
 			updateTrackProgress,
 			markTrackCompleted,
-			getResumeTarget,
+			setTrackCompleted,
 			bookById,
 			refreshLibrary,
 		}),
@@ -372,7 +393,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
 			setTrackSortMode,
 			updateTrackProgress,
 			markTrackCompleted,
-			getResumeTarget,
+			setTrackCompleted,
 			bookById,
 			refreshLibrary,
 		],
@@ -396,30 +417,4 @@ function isFinished(positionMs: number, durationMs: number | undefined, threshol
 	if (positionMs >= durationMs * threshold) return true
 	// 'Within the last 10 s' rule — only meaningful for tracks longer than that
 	return durationMs > 10_000 && positionMs >= durationMs - 10_000
-}
-
-function guessNameFromFiles(names: string[]): string {
-	// Best guess: common meaningful prefix before numbering
-	const bases = names.map((n) =>
-		n
-			.replace(/\.[^.]+$/, '')
-			.replace(/[\s\-_]*\d+\s*$/, '')
-			.trim(),
-	)
-	if (bases.length === 1) return bases[0] || 'Imported audio'
-	const common = longestCommonPrefix(bases)
-	const cleaned = common.replace(/[\s\-_,.:()[\]+#]+$/, '').trim()
-	return cleaned || 'Imported audio'
-}
-
-function longestCommonPrefix(strings: string[]): string {
-	if (strings.length === 0) return ''
-	let prefix = strings[0]
-	for (const s of strings.slice(1)) {
-		while (!s.startsWith(prefix) && prefix.length > 0) {
-			prefix = prefix.slice(0, -1)
-		}
-		if (!prefix) return ''
-	}
-	return prefix
 }

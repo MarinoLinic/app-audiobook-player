@@ -5,6 +5,7 @@ import { Logo } from '../../components/Logo'
 import { OptionSheet } from '../../components/OptionSheet'
 import { APP_NAME, BOOK_SORT_LABELS, SKIP_OPTIONS, TRACK_SORT_LABELS } from '../../constants/Defaults'
 import { useLibrary } from '../../context/LibraryContext'
+import { volumeBoostAvailable } from '../../modules/volume-boost/src'
 import { useTheme } from '../../context/ThemeContext'
 import { ThemePreference, TrackSortMode, BookSortMode } from '../../types'
 
@@ -66,8 +67,10 @@ export default function SettingsScreen() {
 			<View style={[styles.note, { backgroundColor: theme.card, borderColor: theme.border }]}>
 				<Ionicons name="volume-high-outline" size={20} color={theme.accent} />
 				<Text style={[styles.noteText, { color: theme.textSecondary }]}>
-					The player volume slider goes up to 200%. Above 100% an amplifier (Android Loudness Enhancer) kicks in — it
-					requires a development build and is not available in Expo Go.
+					The player volume slider goes up to 200%. Above 100% an amplifier (Android Loudness Enhancer) kicks in.
+					{volumeBoostAvailable
+						? ' Boost is active on this build.'
+						: ' This build has no boost support (e.g. Expo Go or iOS) — the slider is capped at 100% in effect.'}
 				</Text>
 			</View>
 

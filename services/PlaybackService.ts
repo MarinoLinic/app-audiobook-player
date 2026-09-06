@@ -73,18 +73,6 @@ export class PlaybackService {
 		if (!this.player) return
 		this.player.volume = percentToPlayerVolume(percent)
 	}
-
-	get isPlaying(): boolean {
-		return this.player?.playing ?? false
-	}
-
-	get positionMs(): number {
-		return (this.player?.currentTime ?? 0) * 1000
-	}
-
-	get durationMs(): number {
-		return (this.player?.duration ?? 0) * 1000
-	}
 }
 
 export const playbackService = new PlaybackService()

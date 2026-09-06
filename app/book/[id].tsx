@@ -19,7 +19,7 @@ export default function BookScreen() {
 	const theme = useTheme()
 	const router = useRouter()
 	const insets = useSafeAreaInsets()
-	const { books, setTrackSortMode, removeTrack } = useLibrary()
+	const { books, setTrackSortMode, removeTrack, setTrackCompleted } = useLibrary()
 	const { book: playingBook, track: playingTrack, isPlaying, playBook, playTrackAtIndex } = usePlayer()
 	const [sortSheetOpen, setSortSheetOpen] = useState(false)
 	const [trackMenu, setTrackMenu] = useState<Track | null>(null)
@@ -158,6 +158,16 @@ export default function BookScreen() {
 				title={trackMenu?.title}
 				onClose={() => setTrackMenu(null)}
 				options={[
+					...(trackMenu
+						? [
+								{
+									label: book.progress[trackMenu.id]?.completed ? 'Mark as unfinished' : 'Mark as finished',
+									icon: 'checkmark-circle-outline' as const,
+									onPress: () =>
+										setTrackCompleted(book!.id, trackMenu.id, !book!.progress[trackMenu.id]?.completed),
+								},
+							]
+						: []),
 					{
 						label: 'Remove from book',
 						icon: 'remove-circle-outline',

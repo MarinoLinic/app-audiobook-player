@@ -38,6 +38,7 @@ export default function PlayerScreen() {
 		setRate,
 		setVolumePercent,
 		setSleepTimerMinutes,
+		playbackError,
 	} = usePlayer()
 
 	const [speedSheet, setSpeedSheet] = useState(false)
@@ -77,6 +78,13 @@ export default function PlayerScreen() {
 				</Text>
 				<View style={{ width: 30 }} />
 			</View>
+
+			{playbackError && (
+				<View style={[styles.errorBanner, { backgroundColor: theme.danger }]}>
+					<Ionicons name="alert-circle" size={16} color="#fff" />
+					<Text style={styles.errorText}>{playbackError}</Text>
+				</View>
+			)}
 
 			<View style={styles.coverWrap}>
 				<CoverArt uri={book.coverUri} title={book.name} size={Math.min(320, 300)} radius={16} />
@@ -218,6 +226,17 @@ export default function PlayerScreen() {
 const styles = StyleSheet.create({
 	container: { flex: 1 },
 	center: { alignItems: 'center', justifyContent: 'center' },
+	errorBanner: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 8,
+		marginHorizontal: 16,
+		marginTop: 8,
+		paddingHorizontal: 12,
+		paddingVertical: 8,
+		borderRadius: 10,
+	},
+	errorText: { color: '#fff', fontSize: 13, flex: 1 },
 	topBar: {
 		flexDirection: 'row',
 		alignItems: 'center',
