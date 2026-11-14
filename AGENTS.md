@@ -28,3 +28,11 @@ Expo SDK 53 (managed) + expo-router 5, React Native 0.79, TypeScript strict, new
 - Progress is persisted in the `Book.progress` map via `updateTrackProgress`; a track is "finished" at 97% or within the last 10 s.
 
 Read the SDK 53 docs before adding Expo APIs: https://docs.expo.dev/versions/v53.0.0/
+
+## PC phone view
+
+Open PC.cmd launches the localhost-only, offline Expo compiler and a dedicated browser profile at LOCALAPPDATA/Marino/PCAppPreviews/lector. Stop PC.cmd stops its owned server; repeated opens reuse it. Keep fixed port 8181 and profile stable for saved data. public/phone.html bounds the app to a phone layout. See docs/PC-PREVIEW.md for commands, source paths, validation and limitations. No emulator, phone pairing, Expo account or EAS service is required.
+
+LibraryService.web and PlaybackService.web own real IndexedDB audio imports and HTML media playback; native services remain separate. Browser Blob URLs are transient and must be revoked on release; stable lector-media: identifiers remain in saved books. Do not persist blob: URLs. Use the platform slider proxy to keep React19 web compatibility while preserving the native component. Shared PlayerContext awaits source loading and guards replaced requests; preserve native pending-seek arbitration. Test real import/playback/reopen using a synthetic WAV and isolated QA profile, never user audio/profile. Native mobile behavior still needs device testing.
+
+PC preview servers have a finite two-hour lifetime renewed by Open PC, enforced by the per-server pc-preview-timeout.ps1 watchdog. This is not activity tracking. The watchdog must verify this checkout, PID and process start time before killing its owned tree, and must exit after manual Stop. Use -LifetimeSeconds only for isolated short timeout QA; normal launches use7200seconds.

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Tabs } from 'expo-router'
 import React from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { Platform, StyleSheet, Text, View } from 'react-native'
 import { Logo } from '../../components/Logo'
 import { MiniPlayer } from '../../components/MiniPlayer'
 import { useTheme } from '../../context/ThemeContext'
@@ -15,7 +15,7 @@ export default function TabLayout() {
 					headerStyle: { backgroundColor: theme.background },
 					headerTintColor: theme.text,
 					headerShadowVisible: false,
-					tabBarStyle: { backgroundColor: theme.tabBar, borderTopColor: theme.border },
+					tabBarStyle: { backgroundColor: theme.tabBar, borderTopColor: theme.border, ...(Platform.OS === 'web' ? { height: 64, paddingTop: 6, paddingBottom: 8 } : {}) },
 					tabBarActiveTintColor: theme.accent,
 					tabBarInactiveTintColor: theme.textTertiary,
 					sceneStyle: { backgroundColor: theme.background },

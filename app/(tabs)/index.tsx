@@ -1,7 +1,8 @@
+import { Alert } from '../../utils/alert'
 import { Ionicons } from '@expo/vector-icons'
 import { useFocusEffect, useRouter } from 'expo-router'
 import React, { useCallback, useMemo, useState } from 'react'
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { CoverArt } from '../../components/CoverArt'
 import { Logo } from '../../components/Logo'
 import { OptionSheet } from '../../components/OptionSheet'
@@ -95,9 +96,9 @@ export default function LibraryScreen() {
 					<Logo size={96} />
 					<Text style={[styles.emptyTitle, { color: theme.text }]}>Your library is empty</Text>
 					<Text style={[styles.emptyText, { color: theme.textSecondary }]}>
-						Add a folder of audiobooks — each folder becomes a book, and Lector remembers exactly where you stopped.
+						{Platform.OS === 'web' ? 'Import audio files from this PC to build your library and save your listening progress.' : 'Add a folder of audiobooks — each folder becomes a book, and Lector remembers exactly where you stopped.'}
 					</Text>
-					<AddButton themeLabel="Add folder" icon="folder-open-outline" onPress={handleAddFolder} primary />
+					{Platform.OS !== 'web' && <AddButton themeLabel="Add folder" icon="folder-open-outline" onPress={handleAddFolder} primary />}
 					<AddButton themeLabel="Import audio files" icon="document-outline" onPress={handleAddFiles} />
 				</View>
 			</View>
@@ -112,9 +113,9 @@ export default function LibraryScreen() {
 					<Ionicons name="swap-vertical" size={16} color={theme.textSecondary} />
 				</Pressable>
 				<View style={styles.toolbarActions}>
-					<Pressable hitSlop={8} onPress={handleAddFolder} style={styles.actionButton}>
+					{Platform.OS !== 'web' && <Pressable hitSlop={8} onPress={handleAddFolder} style={styles.actionButton}>
 						<Ionicons name="folder-open-outline" size={22} color={theme.text} />
-					</Pressable>
+					</Pressable>}
 					<Pressable hitSlop={8} onPress={handleAddFiles} style={styles.actionButton}>
 						<Ionicons name="add-outline" size={26} color={theme.text} />
 					</Pressable>

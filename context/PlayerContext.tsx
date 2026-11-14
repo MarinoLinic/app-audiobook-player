@@ -70,6 +70,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 	const finishedTrackRef = useRef<string | null>(null)
 	const pendingSeekMs = useRef<number | null>(null)
 	const pendingSeekIssued = useRef(false)
+	const loadGeneration = useRef(0)
 	const rateRef = useRef(rate)
 	const volumePercentRef = useRef(volumePercent)
 
@@ -204,13 +205,16 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 			const target = tracksRef.current[index]
 			const id = bookIdRef.current
 			if (!target || !id) return
+			const generation = ++loadGeneration.current
 
 			try {
-				playbackService.load(target.uri, onStatus)
+				await playbackService.load(target.uri, onStatus)
+				if (generation !== loadGeneration.current) return
 				playbackService.setRate(rateRef.current)
 				playbackService.setVolumeFromPercent(volumePercentRef.current)
 				setPlaybackError(null)
 			} catch (error) {
+				if (generation !== loadGeneration.current) return
 				setPlaybackError(`Couldn't play "${target.title}".`)
 				console.error(`Failed to load ${target.uri}:`, error)
 				return
@@ -285,6 +289,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 	const resumeBook = useCallback((targetBook: Book) => playBook(targetBook), [playBook])
 
 	const closePlayer = useCallback(async () => {
+		loadGeneration.current++
 		saveProgress(true)
 		playbackService.release()
 		bookIdRef.current = null

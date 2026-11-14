@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="application-name" content="pc-preview:lector">
+  <title>Lector</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; background: #11141a; }
+    body { display: grid; place-items: center; overflow: hidden; }
+    main { position: relative; width: min(430px, 100vw); height: min(900px, 100dvh); overflow: hidden; border: 1px solid #353a44; border-radius: 20px; box-shadow: 0 12px 50px #0008; }
+    .loading { position: absolute; inset: 0; display: grid; place-items: center; background: #0a0a0a; color: #d1d9e6; font: 15px system-ui; }
+    .loading[hidden] { display: none; }
+    iframe { opacity: 0; display: block; width: 100%; height: 100%; border: 0; background: #0a0a0a; }
+    @media (max-width: 440px), (max-height: 700px) { main { border: 0; border-radius: 0; } }
+  </style>
+</head>
+<body><main><div class="loading" id="loading" role="status">Opening Lector...</div><iframe id="app" src="/" title="Lector" allow="clipboard-read; clipboard-write; autoplay"></iframe></main><script>document.getElementById("app").addEventListener("load", function () { this.style.opacity = "1"; document.getElementById("loading").hidden = true; });</script></body>
+</html>

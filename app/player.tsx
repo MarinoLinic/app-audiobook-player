@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
-import Slider from '@react-native-community/slider'
+import Slider from '../components/Slider'
 import { useRouter } from 'expo-router'
 import React, { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
@@ -101,6 +101,7 @@ export default function PlayerScreen() {
 
 			<View style={styles.seekWrap}>
 				<Slider
+					accessibilityLabel="Playback position"
 					style={styles.slider}
 					minimumValue={0}
 					maximumValue={Math.max(durationMs, 1)}
@@ -137,7 +138,7 @@ export default function PlayerScreen() {
 						<Text style={[styles.skipLabel, { color: theme.text }]}>{settings.skipIntervalSec}</Text>
 					</View>
 				</Pressable>
-				<Pressable style={[styles.playButton, { backgroundColor: theme.accent }]} onPress={togglePlayPause}>
+				<Pressable accessibilityRole="button" accessibilityLabel={isPlaying ? 'Pause' : 'Play'} style={[styles.playButton, { backgroundColor: theme.accent }]} onPress={togglePlayPause}>
 					<Ionicons name={isPlaying ? 'pause' : 'play'} size={44} color={theme.onAccent} style={!isPlaying ? styles.playIconOffset : undefined} />
 				</Pressable>
 				<Pressable hitSlop={10} onPress={() => skipBy(settings.skipIntervalSec)}>
@@ -165,6 +166,7 @@ export default function PlayerScreen() {
 				<View style={[styles.volumePill, { backgroundColor: theme.card }]}>
 					<Ionicons name="volume-low-outline" size={18} color={theme.textSecondary} />
 					<Slider
+						accessibilityLabel="Volume"
 						style={styles.volumeSlider}
 						minimumValue={0}
 						maximumValue={MAX_VOLUME_PERCENT}
