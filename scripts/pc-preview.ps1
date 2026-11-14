@@ -88,7 +88,9 @@ try {
         $env:EXPO_OFFLINE = '1'
         $env:EXPO_NO_TELEMETRY = '1'
         $env:BROWSER = 'none'
-        $previewProcess = Start-Process -FilePath $previewNode -ArgumentList ("`"$previewCli`" start --localhost --port $previewPort --max-workers 2") -WorkingDirectory $previewRoot -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $previewDirectory 'server.log') -RedirectStandardError (Join-Path $previewDirectory 'server-error.log')
+        $env:MARINO_PC_PREVIEW_PORT = [string]$previewPort
+        $previewLoopback = Join-Path $PSScriptRoot 'pc-loopback.cjs'
+        $previewProcess = Start-Process -FilePath $previewNode -ArgumentList ("--require `"$previewLoopback`" `"$previewCli`" start --localhost --port $previewPort --max-workers 2") -WorkingDirectory $previewRoot -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $previewDirectory 'server.log') -RedirectStandardError (Join-Path $previewDirectory 'server-error.log')
         Save-PreviewState @{root=$previewRoot; processId=$previewProcess.Id; url=$previewUrl; startedAt=[DateTime]::UtcNow.ToString('o')}
         $previewOwned = Get-OwnedPreview (Get-PreviewState)
     }
