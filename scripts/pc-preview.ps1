@@ -33,7 +33,7 @@ function Get-OwnedPreview($previewState) {
 }
 function Test-PreviewReady {
     try {
-        $previewResponse = Invoke-WebRequest -Uri $previewUrl -UseBasicParsing -TimeoutSec 2
+        $previewResponse = Invoke-WebRequest -Uri "http://127.0.0.1:$previewPort/phone.html" -UseBasicParsing -TimeoutSec 2
         return $previewResponse.StatusCode -eq 200 -and $previewResponse.Content.Contains("pc-preview:$($previewPackage.name)")
     } catch { return $false }
 }
